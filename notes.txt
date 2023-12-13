@@ -1,0 +1,138 @@
+### Сериализация ###
+Перевод данных в строковое состояние для отправки
+#serializers.py
+from rest_framework import serializers
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'is_staff']
+
+## Кастомные поля ##
+1 вариант - использовать SerializerMethodField и назначить функцию для вывода поля
+class PostSerializer(serializers.ModelSerializer):
+    like_count = serializers.SerializerMethodField()
+
+    def get_like_count(self, obj):
+        return obj.likes.count()
+    ...
+2 вариант - использовать поля с указанием source (при обращении к другой модели указывать вызов не нужно!)
+class PostSerializer(serializers.ModelSerializer):
+    like_count = serializers.IntegerField(source='значение')
+    Или
+    like_count = serializers.IntegerField(source='fkmodelname_set.all.first.value_name')
+
+## Вложенность сериализаторов ##
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
+
+class PostSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'content', 'user']
+
+## Переопределние добавления ##
+class TrackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track
+        fields = ['order', 'title', 'duration']
+
+class AlbumSerializer(serializers.ModelSerializer):
+    tracks = TrackSerializer(many=True)
+
+    class Meta:
+        model = Album
+        fields = ['album_name', 'artist', 'tracks']
+
+    def create(self, validated_data):
+        tracks_data = validated_data.pop('tracks')
+        album = Album.objects.create(**validated_data)
+        for track_data in tracks_data:
+            Track.objects.create(album=album, **track_data)
+        return album
+
+
+### viewset ###
+Вьюшка, которая включает в себя все основные виды запросов RESTfull
+
+list — отображение списка сущностей, HTTP-метод GET.
+create — создание сущности, HTTP-метод POST.
+retrieve — отображение одной сущности, HTTP-метод GET.
+update — полное обновление сущности, HTTP-метод PUT.
+partial_update — частичное обновление сущности, HTTP-метод PATCH.
+destroy — удаление сущности, HTTP-метод DELETE.
+
+Можно их не переопределять и написать коротким способом:
+
+class UserViewSet(viewsets.ViewSet):
+    serializer_class = myapps.serializers.UserSerializer
+    queryset = User.objects.all()
+
+Или переопределить:
+# views.py
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from myapps.serializers import UserSerializer
+from rest_framework import viewsets
+from rest_framework.response import Response
+
+class UserViewSet(viewsets.ViewSet):
+    """
+    Простой ViewSet-класс для вывода списка пользователей и информации по одному объекту
+    """
+    def list(self, request):
+        # Метод для вывода списка пользователей с определением выборки из базы и указанием сериализатора
+        queryset = User.objects.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        # Метод для вывода информации по пользователю с определением выборки из базы и указанием сериализатора
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+
+Запись в urls:
+# urls.py
+from myapp.views import UserViewSet
+from rest_framework.routers import DefaultRouter
+
+# Описание маршрутизации для ViewSet
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+urlpatterns = router.urls
+
+
+
+### Generic ###
+
+Более гибкая настройка отдельных http-запросов
+
+ListAPIView отвечает за отображение списка сущностей.
+RetrieveAPIView отвечает за отображение одной сущности.
+CreateAPIView отвечает за создание сущности.
+UpdateAPIView отвечает за редактирование сущности.
+DestroyAPIView отвечает за удаление сущности.
+
+
+# views.py
+from django.contrib.auth.models import User
+from myapp.serializers import UserSerializer
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser
+
+class UserList(generics.ListCreateAPIView):
+    # Описываем класс-контроллер на основе базового класса дженерика и указываем необходимые атрибуты
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+# urls.py
+# Описываем маршрутизацию через обычные урлы для доступа к контроллеру
+path('users/', ListCreateAPIView.as_view(queryset=User.objects.all(), serializer_class=UserSerializer), name='user-list')
