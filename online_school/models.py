@@ -12,9 +12,14 @@ class Course(models.Model):
     class Meta:
         verbose_name = 'курс'
         verbose_name_plural = 'курсы'
+    
+    def __str__(self):
+        return self.name
+    
 
 
 class Lesson(models.Model):
+    course = models.ForeignKey(Course, verbose_name=_("курс"), on_delete=models.CASCADE)
     name = models.CharField(_("название урока"), max_length=50)
     description = models.TextField(_("описание урока"), **NULLABLE)
     preview_img = models.ImageField(_("превью (картинка)"), upload_to='lesson/', **NULLABLE)
@@ -23,3 +28,6 @@ class Lesson(models.Model):
     class Meta:
         verbose_name = 'урок'
         verbose_name_plural = 'уроки'
+
+    def __str__(self):
+        return f'{self.course.name}: {self.name}'

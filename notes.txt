@@ -136,3 +136,34 @@ class UserList(generics.ListCreateAPIView):
 # urls.py
 # Описываем маршрутизацию через обычные урлы для доступа к контроллеру
 path('users/', ListCreateAPIView.as_view(queryset=User.objects.all(), serializer_class=UserSerializer), name='user-list')
+
+## фильтрация и ордеринг ##
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.generics import ListAPIView
+from .models import MyModel
+from .serializers import MyModelSerializer
+
+class MyModelListView(ListAPIView):
+    queryset = MyModel.objects.all()
+    serializer_class = MyModelSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['field1', 'field2']
+    ordering_fields = ['field1', 'field2']
+
+## расширение фильтрации с помощью django-filter ##
+INSTALLED_APPS = [
+    ...
+    'django_filters',
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        ...
+    ),
+}
+
+class ProductList(generics.ListAPIView):
+    queryset = Product.objects.all()
+    filter_backends = (filters.DjangoFilterBackend,) # Бэкенд для обработки фильтра
+    filterset_fields = ('category', 'in_stock') # Набор полей для фильтрации
