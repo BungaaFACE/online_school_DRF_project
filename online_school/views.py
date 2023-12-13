@@ -3,7 +3,7 @@ from rest_framework import viewsets, generics
 from online_school.serializers import CourseSerializer, LessonSerializer
 from online_school.models import Course, Lesson
 
-class CourseViewSet(viewsets.ViewSet):
+class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
 
