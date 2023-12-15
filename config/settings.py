@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     
     'users',
     'online_school',
+    
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -139,3 +141,9 @@ if CACHE_ENABLED:
             "LOCATION": os.getenv('CACHE_LOCATION'),
         }
     }
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}

@@ -5,13 +5,15 @@ from online_school.views import (CourseViewSet,
                                  LessonCreateAPIView, 
                                  LessonRetrieveAPIView, 
                                  LessonUpdateAPIView,
-                                 LessonDestroyAPIView)
+                                 LessonDestroyAPIView, 
+                                 PaymentViewSet)
 from online_school.apps import OnlineSchoolConfig
 
 app_name = OnlineSchoolConfig.name
 
 router = routers.DefaultRouter()
 router.register(r'course', CourseViewSet, basename='course')
+router.register(r'payment', PaymentViewSet, basename='payment')
 
 urlpatterns = [
     path('lesson/', LessonListAPIView.as_view(), name='lesson_list'),
