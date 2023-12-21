@@ -11,6 +11,7 @@ class Course(models.Model):
     name = models.CharField(_("название курса"), max_length=50)
     preview_img = models.ImageField(_("превью (картинка)"), upload_to='course/', **NULLABLE)
     description = models.TextField(_("описание курса"), **NULLABLE)
+    user = models.ForeignKey(User, verbose_name=_("пользователь"), on_delete=models.CASCADE, **NULLABLE)
     
     payment = GenericRelation('Payment', related_query_name='course')
     
@@ -28,6 +29,7 @@ class Lesson(models.Model):
     description = models.TextField(_("описание урока"), **NULLABLE)
     preview_img = models.ImageField(_("превью (картинка)"), upload_to='lesson/', **NULLABLE)
     video_link = models.CharField(_("ссылка на видео"), max_length=250)
+    user = models.ForeignKey(User, verbose_name=_("пользователь"), on_delete=models.CASCADE, **NULLABLE)
     
     payment = GenericRelation('Payment', related_query_name='lesson')
     
