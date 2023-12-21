@@ -16,6 +16,6 @@ class Command(BaseCommand):
         )
 
         user.set_password('moder')
-        group = Group.objects.get(name='Модератор')
+        group, _ = Group.objects.get_or_create(name='Модератор')
         group.user_set.add(user)
         user.save()
