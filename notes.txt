@@ -167,3 +167,123 @@ class ProductList(generics.ListAPIView):
     queryset = Product.objects.all()
     filter_backends = (filters.DjangoFilterBackend,) # Бэкенд для обработки фильтра
     filterset_fields = ('category', 'in_stock') # Набор полей для фильтрации
+
+
+# Права доступа #
+pip install djangorestframework-simplejwt
+
+#settings.py
+# Настройки JWT-токенов
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    # Установка прав по умолчанию только с авторизацией
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+
+
+# Настройки срока действия токенов
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
+
+## Авторизованные запросы ##
+Заголовок запроса:
+Authorization: Bearer <access_token>
+
+
+## Создание вьюхи ##
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+ИЛИ воспользоваться стандартными
+urlpatterns = [
+    ...
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    ...
+]
+
+## Дополнение сериалайзера ##
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Добавление пользовательских полей в токен
+        token['username'] = user.username
+        token['email'] = user.email
+
+        return token
+
+
+## Права для FBV ##
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def my_protected_view(request):
+    # Ваш код представления
+    return Response({'message': 'Авторизовано!'})
+
+
+## Права для CBV ##
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+class MyView(APIView):
+    permission_classes = [IsAuthenticated]
+    # Примечание: он поддерживает & (и), | (или) и ~ (не).
+
+    def get(self, request):
+        # Ваш код представления
+        return Response({'message': 'Авторизовано!'})
+
+
+## Часто используемые встроенные классы разрешений ##
+
+AllowAny — этот класс разрешений не накладывает никаких ограничений 
+и разрешает доступ ко всем пользователям, включая анонимных.
+ 
+IsAuthenticated — этот класс разрешений требует, 
+чтобы пользователь был аутентифицирован (вошел в систему). 
+Анонимным пользователям будет отказано в доступе.
+ 
+IsAdminUser — этот класс разрешений требует, 
+чтобы пользователь был аутентифицирован и 
+имел статус администратора (is_staff=True).
+ 
+IsAuthenticatedOrReadOnly — этот класс разрешений позволяет 
+анонимным пользователям выполнять только операции чтения (GET), 
+а аутентифицированным пользователям разрешается 
+выполнение всех операций.
+
+
+## Кастомные классы разрешений ##
+from rest_framework.permissions import BasePermission
+
+class SomePermissionsClass(BasePermission):
+    def has_permission(self, request, view):
+        return check_some_functionality() #True or False
+
+
+## Применение прав в сериализаторе ##
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.serializers import ModelSerializer
+
+class MySerializer(ModelSerializer):
+    class Meta:
+        model = MyModel
+        fields = '__all__'
+        permission_classes = [IsAuthenticated]

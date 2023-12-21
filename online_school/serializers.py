@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from online_school.models import Course, Lesson, Payment
+from online_school.permissions import CourseModeratorClass, IsModeratorClass
+from rest_framework.permissions import IsAuthenticated
 
 
 class LessonSerializer(serializers.ModelSerializer):
