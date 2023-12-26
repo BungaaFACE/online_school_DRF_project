@@ -287,3 +287,128 @@ class MySerializer(ModelSerializer):
         model = MyModel
         fields = '__all__'
         permission_classes = [IsAuthenticated]
+
+
+# Валидация сериалайзеров #
+
+## Параметры полей ##
+class BillingRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ['client', 'date', 'amount']
+        extra_kwargs = {'client': {'required': False}} # Сделать поле необязательным для заполнения
+        validators = []
+
+## Встроенный валидатор ##
+from rest_framework.validators import UniqueForYearValidator
+
+class ExampleSerializer(serializers.Serializer):
+    class Meta:
+        validators = [ # Специальный атрибут, в котором передается список валидаторов
+            UniqueForYearValidator(
+                queryset=BlogPostItem.objects.all(), # Выборка данных, для которых будет применяться валидация
+                field='slug', # Определение поля для валидации
+                date_field='published' # Дополнительный параметр, который необходим для работы конкретного валидатора
+            )
+        ]
+
+## Валидатор отдельного поля ##
+def validate_even(value):
+    if value % 2 != 0:
+        raise serializers.ValidationError("The value must be an even number.")
+
+class MySerializer(serializers.Serializer):
+    number = serializers.IntegerField(validators=[validate_even])
+
+from rest_framework import serializers
+
+class EvenNumberValidator:
+    def __call__(self, value):
+        if value % 2 != 0:
+            raise serializers.ValidationError("The value must be an even number.")
+
+class MySerializer(serializers.Serializer):
+    number = serializers.IntegerField(validators=[EvenNumberValidator()])
+
+
+
+# Пагинаторы #
+PageNumberPagination разбивает данные на страницы на основе номера страницы. 
+Клиент может указать номер страницы в запросе для получения нужной страницы данных.
+
+LimitOffsetPagination позволяет клиенту указать смещение (offset) 
+и ограничение (limit) для получения данных. Например, 
+клиент может запросить 10 результатов, начиная с 20-го элемента.
+
+CursorPagination использует курсоры (представляют собой 
+указатели на определенные элементы набора данных) для пагинации. 
+Он предоставляет эффективную пагинацию при работе с большими 
+объемами данных или в случаях, когда сортировка или фильтрация 
+данных осуществляется на основе значений полей.
+
+Пример:
+# pagination.py
+from rest_framework.pagination import PageNumberPagination
+
+class MyPagination(PageNumberPagination):
+    page_size = 10  # Количество элементов на странице
+    page_size_query_param = 'page_size'  # Параметр запроса для указания количества элементов на странице
+    max_page_size = 100  # Максимальное количество элементов на странице
+
+# views.py
+class MyView(APIView):
+    pagination_class = MyPagination
+
+    def get(self, request):
+        queryset = MyModel.objects.all()
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = MySerializer(paginated_queryset, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
+# Тестирование #
+Основные составляющие части тестового случая:
+
+setUp — специальный метод для установки взаимодействия с 
+данными для теста, например для заполнения первичных данных;
+ 
+test_ — метод-тест, название которого должно начинаться 
+со специального слова test_, так гарантируется запуск метода как теста;
+ 
+tearDown — специальный метод, который выполняется после завершения 
+теста для очистки необходимых данных.
+
+HTTP-клиент APIClient включает в себя все HTTP-методы, 
+таким образом, у клиента есть специальные методы, которые можно вызывать:
+
+self.client.get — отправка GET-запроса;
+self.client.post — отправка POST-запроса; 
+self.client.put — отправка PUT-запроса; 
+self.client.patch — отправка PATCH-запроса;
+self.client.delete — отправка DELETE-запроса.
+
+
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+class MyAPITestCase(APITestCase):
+    def setUp(self):
+        # Подготовка данных перед каждым тестом
+        self.url = reverse('my-api')
+        self.data = {'foo': 'bar'}
+
+    def test_get(self):
+        # Тестирование GET-запроса к API
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_post(self):
+        # Тестирование POST-запроса к API
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+Для подсчета покрытия тестами используется 
+специальный пакет coverage.
+запустить подсчет покрытия и вывести отчет:
+coverage run --source='.' manage.py test
+coverage report
