@@ -22,8 +22,12 @@ class IsStaffClass(BasePermission):
 
 class IsCreatorClass(BasePermission):
     def has_permission(self, request, view):
-        return is_creator(view.get_object(), request)
-
+        if request.user.is_authenticated:
+            return True
+        
+    def has_object_permission(self, request, view, obj):
+        if is_creator(obj, request):
+            return True
 
 class IsModeratorClass(BasePermission):
     def has_permission(self, request, view):

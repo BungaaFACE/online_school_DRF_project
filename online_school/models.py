@@ -53,3 +53,10 @@ class Payment(models.Model):
     
     summ = models.IntegerField(_("сумма оплаты"))
     payment_type = models.CharField(_("способ оплаты"), choices=PAYMENT_TYPE_CHOICES, max_length=4)
+
+
+class CourseSubscribe(models.Model):
+    user = models.ForeignKey(User, related_name='user_sub', on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, related_name='course_sub', on_delete=models.CASCADE)
+    
+    
