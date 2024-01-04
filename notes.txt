@@ -412,3 +412,75 @@ class MyAPITestCase(APITestCase):
 запустить подсчет покрытия и вывести отчет:
 coverage run --source='.' manage.py test
 coverage report
+
+
+### Документация ###
+pip install drf_yasg
+# settings.py
+INSTALLED_APPS = [
+   ...
+   'django.contrib.staticfiles',
+   'drf_yasg',
+   ...
+]
+
+#config/urls.py
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Snippets API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@snippets.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
+
+urlpatterns = [
+   re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+   re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+]
+
+## Кастомное описание страницы ##
+class StudentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        responses={200: 'members added'},
+        request_body=openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(
+                type=openapi.TYPE_OBJECT, description='Students ids list',
+                properties={
+                    'id': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        description='student id',
+                        example="1"
+                    ),})))
+    def post(self, *args, **kwargs):
+        return Response('ok')
+
+
+### Безопасность ###
+CORS
+# Установка пакета
+pip install django-cors-headers
+
+# settings.py
+INSTALLED_APPS = [
+    'corsheaders',
+]
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',  # Замените на адрес вашего фронтенд-сервера
+]
+CORS_ALLOW_ALL_ORIGINS = False
