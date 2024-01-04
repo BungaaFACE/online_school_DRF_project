@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework import routers
-from online_school.views import (CourseSubscribeCreateAPIView, CourseSubscribeDestroyAPIView, CourseSubscribeListAPIView, CourseViewSet, 
+from online_school.views import (BuyAPIView, CourseSubscribeCreateAPIView, CourseSubscribeDestroyAPIView, CourseSubscribeListAPIView, CourseViewSet, GetPaymentView, 
                                  LessonListAPIView, 
                                  LessonCreateAPIView, 
                                  LessonRetrieveAPIView, 
@@ -24,4 +24,8 @@ urlpatterns = [
     path('course/subscribe/', CourseSubscribeCreateAPIView.as_view(), name='subscribe_course'),
     path('course/unsubscribe/', CourseSubscribeDestroyAPIView.as_view(), name='unsubscribe_course'),
     path('course/subscribe_list/', CourseSubscribeListAPIView.as_view(), name='subscribe_list'),
+    path('lesson/buy/', BuyAPIView.as_view(), name='lesson_buy'),
+    path('course/buy/', BuyAPIView.as_view(), name='course_buy'),
+    path('stripe_status/', GetPaymentView.as_view(), name='stripe_status'),
+
 ] + router.urls

@@ -12,6 +12,7 @@ class Course(models.Model):
     preview_img = models.ImageField(_("превью (картинка)"), upload_to='course/', **NULLABLE)
     description = models.TextField(_("описание курса"), **NULLABLE)
     user = models.ForeignKey(User, verbose_name=_("пользователь"), on_delete=models.CASCADE, **NULLABLE)
+    price = models.IntegerField(_("цена курса"), default=1000)
     
     payment = GenericRelation('Payment', related_query_name='course')
     
@@ -30,6 +31,7 @@ class Lesson(models.Model):
     preview_img = models.ImageField(_("превью (картинка)"), upload_to='lesson/', **NULLABLE)
     video_link = models.CharField(_("ссылка на видео"), max_length=250)
     user = models.ForeignKey(User, verbose_name=_("пользователь"), on_delete=models.CASCADE, **NULLABLE)
+    price = models.IntegerField(_("цена урока"), default=200)
     
     payment = GenericRelation('Payment', related_query_name='lesson')
     
@@ -54,6 +56,17 @@ class Payment(models.Model):
     summ = models.IntegerField(_("сумма оплаты"))
     payment_type = models.CharField(_("способ оплаты"), choices=PAYMENT_TYPE_CHOICES, max_length=4)
 
+class StripeSession(models.Model):
+    STATUS_TYPE = (('ожидание оплаты', 'ожидание оплаты'),
+                   ('оплачен', 'оплачен'),
+                   ('просрочен', 'просрочен'),)
+    session_id = models.CharField(verbose_name=_("id сессии оплаты"), max_length = 500)
+    user = models.ForeignKey(User, verbose_name=_("пользователь"), on_delete=models.CASCADE)
+    status = models.CharField(verbose_name=_("статус платежа"), choices=STATUS_TYPE, max_length = 16, default = 'ожидание оплаты')
+    
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    buy_object = GenericForeignKey('content_type', 'object_id')
 
 class CourseSubscribe(models.Model):
     user = models.ForeignKey(User, related_name='user_sub', on_delete=models.CASCADE)

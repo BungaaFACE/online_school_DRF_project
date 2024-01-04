@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -165,3 +166,7 @@ if DEBUG:
         'ACCESS_TOKEN_LIFETIME': timedelta(days=90),
         'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
     }
+
+import stripe
+# This is your test secret API key.
+stripe.api_key = os.getenv('STRIPE_API_KEY')
