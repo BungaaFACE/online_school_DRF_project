@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -170,3 +171,15 @@ if DEBUG:
 import stripe
 # This is your test secret API key.
 stripe.api_key = os.getenv('STRIPE_API_KEY')
+
+### Celery ###
+# URL-адрес брокера сообщений
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+# URL-адрес брокера результатов, также Redis  
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+# Часовой пояс для работы Celery
+CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE')
+# Флаг отслеживания выполнения задач
+CELERY_TASK_TRACK_STARTED = os.getenv('CELERY_TASK_TRACK_STARTED') == 'True'
+# Максимальное время на выполнение задачи
+CELERY_TASK_TIME_LIMIT = 30 * 60
