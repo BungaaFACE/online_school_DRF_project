@@ -1,6 +1,7 @@
 from django.conf import settings
 from online_school.models import CourseSubscribe, Payment, StripeSession
 from django.core.mail import send_mail
+from celery import shared_task
 import stripe
 
 class SendCourseUpdate:
@@ -12,6 +13,7 @@ class SendCourseUpdate:
         course_subscribes = CourseSubscribe.objects.filter(course=course)
         self.subscriber_mail_list = [sub.user.email for sub in course_subscribes]
 
+    @shared_task
     def send_email(self):
         send_mail(
             self.mail_subject,

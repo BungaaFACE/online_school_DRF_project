@@ -63,7 +63,6 @@ class StripeSessionSerializer(serializers.ModelSerializer):
     
     def get_buy_object_type(self, obj):
         model_name = obj.buy_object.__class__.__name__
-        print(model_name)
         if 'Course' in model_name:
             return 'Курс'
         elif 'Lesson' in model_name:

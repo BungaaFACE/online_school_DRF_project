@@ -484,3 +484,145 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',  # Замените на адрес вашего фронтенд-сервера
 ]
 CORS_ALLOW_ALL_ORIGINS = False
+
+
+
+### Асинхроннность в Django (Celery) ###
+pip install redis, celery
+
+# config/celery.py
+from __future__ import absolute_import, unicode_literals
+import os
+from celery import Celery
+
+# Установка переменной окружения для настроек проекта
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'my_project.settings')
+
+# Создание экземпляра объекта Celery
+app = Celery('config')
+
+# Загрузка настроек из файла Django
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Автоматическое обнаружение и регистрация задач из файлов tasks.py в приложениях Django
+app.autodiscover_tasks()
+
+
+# config/__init__.py
+from .celery import app as celery_app
+
+__all__ = ('celery_app',)
+
+
+
+# settings.py
+
+# Настройки для Celery
+
+# URL-адрес брокера сообщений
+CELERY_BROKER_URL = 'redis://localhost:6379' # Например, Redis, который по умолчанию работает на порту 6379
+
+# URL-адрес брокера результатов, также Redis  
+CELERY_RESULT_BACKEND = 'redis://localhost:6379' 
+
+# Часовой пояс для работы Celery
+CELERY_TIMEZONE = "Europe/Moscow"
+
+# Флаг отслеживания выполнения задач
+CELERY_TASK_TRACK_STARTED = True 
+
+# Максимальное время на выполнение задачи
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+
+## Добавление задачи ##
+from celery import shared_task
+
+@shared_task
+def add_numbers(x, y):
+    return x + y
+
+# Отложенный запуск #
+result = add_numbers.delay(4, 6)
+
+## Запуск обработчика очереди (worker) для получения задач и их выполнения ##
+celery -A config worker -l INFO
+
+Где:
+config — директория с конфигурацией Django-проекта;
+worker — тип запуска, данный параметр запускает обработчик задач из очереди;
+-l INFO — уровень логирования.
+
+## Получение результата ##
+использовать get() для блокирующего ожидания результата:
+result = add_numbers.delay(4, 6)
+result.get()
+
+ready() для проверки готовности результата
+successful() для проверки успешного выполнения задачи
+
+
+## Периодические задачи celery-beat ##
+pip install django-celery-beat
+# settings.py
+INSTALLED_APPS = [
+    ...
+    'django_celery_beat'
+    ...
+]
+python manage.py migrate
+
+# Установка периодических задач #
+# settings.py
+
+# Настройки для Celery
+CELERY_BEAT_SCHEDULE = {
+    'task-name': {
+        'task': 'myapp.tasks.my_task',  # Путь к задаче
+        'schedule': timedelta(minutes=10),  # Расписание выполнения задачи (например, каждые 10 минут)
+    },
+}
+
+#tasks.py
+from celery import shared_task
+
+@shared_task
+def my_task():
+    # Код задачи
+    pass
+
+Чтобы использовать периодические задачи, нужно запустить не только 
+Celery worker, но и планировщик Celery beat. 
+команда в командной строке:
+celery -A config worker -l INFO
+celery -A config beat -l INFO
+
+Это запустит Celery worker и планировщик Celery beat, 
+которые будут совместно работать для выполнения периодических задач.
+
+
+
+## Создание задачи через модели ##
+import json
+from datetime import datetime, timedelta
+
+from django_celery_beat.models import PeriodicTask, \
+    IntervalSchedule
+
+# Создаем интервал для повтора 
+schedule, created = IntervalSchedule.objects.get_or_create(
+     every=10,
+     period=IntervalSchedule.SECONDS,
+ )
+
+# Создаем задачу для повторения
+PeriodicTask.objects.create(
+     interval=schedule,
+     name='Importing contacts',
+     task='proj.tasks.import_contacts',
+     args=json.dumps(['arg1', 'arg2']),
+     kwargs=json.dumps({
+        'be_careful': True,
+     }),
+     expires=datetime.utcnow() + timedelta(seconds=30)
+ )
