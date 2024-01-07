@@ -2,6 +2,7 @@ from rest_framework import generics
 from users.models import User
 from users.serializers import UserSerializerPrivateUpdate, UserSerializerPublic, UserSerializerPrivateDetails
 from rest_framework.permissions import IsAuthenticated
+from users.services import last_login_blocker
 
 class UserUpdateAPIView(generics.UpdateAPIView):
     serializer_class = UserSerializerPrivateUpdate
