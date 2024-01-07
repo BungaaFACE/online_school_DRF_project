@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics, status, views
 from rest_framework.response import Response
 from online_school.pagination import PagintaionThreeTen
-from online_school.permissions import CourseModeratorClass, IsCreatorClass, IsModeratorClass, is_moderator, is_su
+from online_school.permissions import CourseModeratorClass, IsBoughtCourseClass, IsBoughtLessonClass, IsCreatorClass, IsModeratorClass, is_moderator, is_su
 from rest_framework.permissions import IsAuthenticated
 from online_school.serializers import BuySerializer, CourseSerializer, CourseSubscribeSerializer, LessonSerializer, PaymentSerializer, StripeSessionSerializer
 from online_school.models import Course, CourseSubscribe, Lesson, Payment, StripeSession
@@ -16,7 +16,7 @@ from online_school.services import SendCourseUpdate, update_stripe_sessions_stat
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
-    permission_classes = [CourseModeratorClass|IsAuthenticated&~IsModeratorClass]
+    permission_classes = [CourseModeratorClass|IsAuthenticated&~IsModeratorClass|IsBoughtCourseClass]
     pagination_class = PagintaionThreeTen
     
     def perform_create(self, serializer):
@@ -42,7 +42,7 @@ class LessonListAPIView(generics.ListAPIView):
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsModeratorClass|IsAuthenticated&IsCreatorClass]
+    permission_classes = [IsModeratorClass|IsCreatorClass|IsBoughtLessonClass]
     
     
 
