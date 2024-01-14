@@ -52,8 +52,7 @@ class LessonCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated&~IsModeratorClass]
     
     def perform_create(self, serializer):
-        data = serializer.save()
-        data.user = self.request.user
+        data = serializer.save(user = self.request.user)
         data.save()
         SendCourseUpdate(data.course, 
                          f'В курс {data.course.name} был добавлен урок {data.name}.').send_email.delay()
