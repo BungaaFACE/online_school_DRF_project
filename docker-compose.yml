@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    env_file:
+      - postgres.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis
+
+  online_school_api:
+    build: .
+    tty: true
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+    command: sh -c "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"
+    restart: on-failure
+    ports:
+      - 8001:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  online_school_celery:
+    build: .
+    tty: true
+    command: celery -A config worker -l INFO --hostname redis
+    depends_on:
+      - redis
+      - online_school_api
+
+  online_school_celery_beat:
+    build: .
+    tty: true
+    command: celery -A config beat -l INFO -S django
+    depends_on:
+      - redis
+      - online_school_api
+
+volumes:
+  postgres_data:
