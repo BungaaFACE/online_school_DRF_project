@@ -3,11 +3,18 @@
 Проект включает в себя api сервер для онлайн школы, системы пользователей, покупки кусров и уроков. Проведена интеграция с системой платежей Stripe.  
 
 ## Первоначальная настройка  
+- Клонируйте репозиторий --> `git clone https://github.com:BungaaFACE/Bungaa_Motivator_DRF.git`
 - Создать виртуальное окружение и войти в него.  
 - Установка зависимостей --> `pip install -r r.txt`
 - Установить redis --> `apt install redis`
 - Переименовать файл .env.tpl --> .env и заполнить его.
 - Создание БД --> `python manage.py migrate`
+## Запуск контейнеров через docker-compose  
+1. Клонируйте репозиторий --> `git clone https://github.com:BungaaFACE/Bungaa_Motivator_DRF.git`
+2. Переименуйте .env.tpl и postgres.env.tpl в .env и postgres.env, и настройте параметры.  
+3. Запуск построение и запуск контейнеров --> `docker-compose up`
+4. Перейдите по адресу http://localhost:8001/swagger/ или http://localhost:8001/redoc/ для вывода документации.
+
 ## Наполнение данными  
 ### Superuser  
 - Команда: `python manage.py csu`
