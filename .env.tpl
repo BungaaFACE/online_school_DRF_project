@@ -5,7 +5,7 @@ DB_ENGINE=django.db.backends.postgresql_psycopg2
 DB_NAME=online_school
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_HOST=postgres
+DB_HOST=db
 DB_PORT=5432
 # DB container
 PGDATA=/var/lib/postgresql/data
