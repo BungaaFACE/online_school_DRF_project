@@ -7,6 +7,8 @@ DB_USER=postgres
 DB_PASSWORD=postgres
 DB_HOST=postgres
 DB_PORT=5432
+# DB container
+PGDATA=/var/lib/postgresql/data
 
 EMAIL_PORT=465
 EMAIL_USE_SSL=True
